@@ -68,23 +68,24 @@ async def open_service_nursery() -> AsyncIterator[trio.Nursery]:
     ``conn`` to remain usable in any ``finally`` or ``__aexit__``
     blocks in ``communicate_with_websocket()``.  With a regular
     nursery, this is not guaranteed; with a service nursery, it is.
+
     An example hinting at general usage::
 
         @asynccontextmanager
         async def open_websocket(host, port):
             async with open_service_nursery() as nursery:
+                # ... make some child tasks ...
                 try:
-                    # ... make some child tasks ...
                     yield connection
                 finally:
-                    # The yield body is already cancelled, and
+                    # The caller's body is already cancelled, and our
                     # child tasks are still available here for cleanup...
                     pass
 
-    Now, anything in the body of the ``open_websocket()`` context, including
+    Now anything in the body of the ``open_websocket()`` context, including
     ``communicate_with_websocket()``, will be given first opportunity to cancel
     gracefully.  Subsequently, the ``finally`` block in the ``open_websocket()``
-    implementation runs, and tasks spawned within the ``try`` body are still
+    implementation runs, and tasks spawned within the ``try`` block are still
     available during cleanup.
 
     Note that child tasks spawned using ``start()`` gain their protection from
